@@ -19,16 +19,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.Timer;
-import javax.swing.border.Border;
 
 /**
  *
@@ -39,26 +35,24 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     /**
      * Creates new form Game
      */
-    private final int boardWidth = 500;
-    private final int boardHeight = 500;
-    private final int DOT_SIZE = 10;
-    private final int ALL_DOTS = 2500;
-    private final int RAND_POS = 29;
+    private final int dotSize = 10;
+    private final int ALL_DOTS = 900;
+    private final int randPos = 29;
     private final int DELAY = 140;
-
+    
     private final int x[] = new int[ALL_DOTS];
     private final int y[] = new int[ALL_DOTS];
-
+    
     private int dots;
     private int food_location_x;
     private int food_location_y;
-
+    
     private boolean turnLeft = false;
     private boolean turnRight = true;
     private boolean turnUp = false;
     private boolean turnDown = false;
     private boolean isGameStarted = true;
-
+    
     private Timer coutdown;
     private Image ball;
     private Image apple;
@@ -67,49 +61,52 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     JLabel label = new JLabel();
     JButton button = new JButton("Start Game");
     Thread appleLocationChange;
+    JLabel scorelbl = new JLabel();
+    
+//    BorderModal borderModal = new BodrerModal();
 
     /**
-     * 
+     *
      */
     public Game() {
         addKeyListener((KeyListener) new KeyMovementListent());
-        setBackground(Color.DARK_GRAY);
+        setBackground(Color.blue);
         setFocusable(true);
-        setPreferredSize(new Dimension(500, 500));
-        Border rline = BorderFactory.createLineBorder(Color.RED,4);
-        
-        setBorder(rline);
-        loadImages();
+        setPreferredSize(new Dimension(300, 400));
         button.setFocusable(false);
         
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                loadImages();
                 started = true;
                 startGame();
             }
-
+            
         });
         label.setBounds(0, 0, 0, 0);
+        label.setText("0");
+        scorelbl.setText("score");
+        scorelbl.setForeground(Color.white);
         label.setForeground(Color.white);
         button.setBounds(0, 0, 0, 0);
         add(button);
+        add(scorelbl);
         add(label);
+        
         appleLocationChange = new Thread(() -> {
             while (true) {
                 try {
-                    Random rand = new Random();
-                    int randomNumber = rand.nextInt((15 - 10) + 1) + 10;
-                    Thread.sleep(randomNumber * 1000);
-                    changeFoodLocation();
+                    Thread.sleep(RandomSingleton.getRandomNumber(10, 15) * 1000);
+                    changeFoodLocation(randPos, dotSize);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Game.class.getName()).log(Level.SEVERE, null, ex);
                 }
-
+                
             }
         });
     }
-
+    
     private void loadImages() {
         ball = getImage("food.png");
         apple = getImage("apple.png");
@@ -117,9 +114,9 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     }
 
     /**
-     * 
+     *
      * @param imageName
-     * @return 
+     * @return
      */
     private Image getImage(String imageName) {
         java.net.URL imgUrl = getClass().getResource(imageName);
@@ -127,7 +124,7 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     }
 
     /**
-     * 
+     *
      */
     private void startGame() {
         button.hide();
@@ -136,14 +133,14 @@ public class Game extends javax.swing.JPanel implements ActionListener {
             x[z] = 50 - z * 10;
             y[z] = 50;
         }
-        changeFoodLocation();
+        changeFoodLocation(randPos, dotSize);
         coutdown = new Timer(DELAY, this);
         coutdown.start();
     }
 
     /**
-     * 
-     * @param graphics 
+     *
+     * @param graphics
      */
     @Override
     public void paintComponent(Graphics graphics) {
@@ -151,12 +148,12 @@ public class Game extends javax.swing.JPanel implements ActionListener {
         if (started) {
             populateApple(graphics);
         }
-
+        
     }
 
     /**
-     * 
-     * @param graphics 
+     *
+     * @param graphics
      */
     private void populateApple(Graphics graphics) {
         if (isGameStarted) {
@@ -173,81 +170,75 @@ public class Game extends javax.swing.JPanel implements ActionListener {
             gameOver(graphics);
         }
     }
-
+    
     private void gameOver(Graphics g) {
-
-        String gameOverScr = "Game Over";
+        
+        String msg = "Game Over";
         Font small = new Font("Helvetica", Font.BOLD, 14);
         FontMetrics metr = getFontMetrics(small);
-
+        
         g.setColor(Color.white);
         g.setFont(small);
-        g.drawString(gameOverScr, (boardWidth - metr.stringWidth(gameOverScr)) / 2, boardHeight / 2);
-   
-        
-        coutdown.stop();
-        appleLocationChange.interrupt();
-     
+        g.drawString(msg, (BoardSingleton.getBoardWidth()- metr.stringWidth(msg)) / 2, BoardSingleton.getBoardHeight() / 2);
     }
-
-    private void isFoodEat() {
-
+    
+    private void checkApple() {
+        
         if ((x[0] == food_location_x) && (y[0] == food_location_y)) {
-
             dots++;
-            label.setText("Score : "+Integer.toString(dots - 1));
-            changeFoodLocation();
+            label.setText(Integer.toString(dots - 1));
+            changeFoodLocation(randPos, dotSize);
         }
     }
-
-    private void movement() {
-
+    
+    private void move() {
+        
         for (int z = dots; z > 0; z--) {
             x[z] = x[(z - 1)];
             y[z] = y[(z - 1)];
         }
-
+        
         if (turnLeft) {
-            x[0] -= DOT_SIZE;
+            x[0] -= dotSize;
         }
-
+        
         if (turnRight) {
-            x[0] += DOT_SIZE;
+            x[0] += dotSize;
         }
-
+        
         if (turnUp) {
-            y[0] -= DOT_SIZE;
+            y[0] -= dotSize;
         }
-
+        
         if (turnDown) {
-            y[0] += DOT_SIZE;
+            y[0] += dotSize;
         }
     }
-
-    private void collisionDetection() {
-
+    
+    private void checkCollision() {
+        
         for (int c = dots; c > 0; c--) {
             if ((c > 4) && (x[0] == x[c]) && (y[0] == y[c])) {
                 isGameStarted = false;
             }
         }
-
-        if (y[0] >= boardHeight) {
+        
+        if (y[0] >= BoardSingleton.getBoardHeight()) {
             isGameStarted = false;
         }
-
+        
         if (y[0] < 0) {
             isGameStarted = false;
         }
-
-        if (x[0] >= boardWidth) {
+        
+        if (x[0] >= BoardSingleton.getBoardWidth()) {
             isGameStarted = false;
         }
-
+        
         if (x[0] < 0) {
             isGameStarted = false;
         }
-
+        
         if (!isGameStarted) {
             coutdown.stop();
         }
@@ -256,23 +247,20 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     /**
      * This method changes location of the apple
      */
-    private void changeFoodLocation() {
-        int r = (int) (Math.random() * RAND_POS);
-        food_location_x = ((r * DOT_SIZE));
-
-        r = (int) (Math.random() * RAND_POS);
-        food_location_y = ((r * DOT_SIZE));
+    private void changeFoodLocation(int randPos, int dotSize) {
+        food_location_x = RandomSingleton.getFoodLocationX(randPos, dotSize);
+        food_location_y = RandomSingleton.getFoodLocationY(randPos, dotSize);
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
-
+        
         if (isGameStarted) {
-            isFoodEat();
-            collisionDetection();
-            movement();
+            checkApple();
+            checkCollision();
+            move();
         }
-
+        
         repaint();
     }
 
@@ -302,11 +290,11 @@ public class Game extends javax.swing.JPanel implements ActionListener {
     }// </editor-fold>//GEN-END:initComponents
 
     private class KeyMovementListent extends KeyAdapter {
-
+        
         @Override
         public void keyPressed(KeyEvent event) {
             int pressedKey = event.getKeyCode();
-
+            
             switch (pressedKey) {
                 case KeyEvent.VK_LEFT:
                     if (!turnRight) {
@@ -340,7 +328,7 @@ public class Game extends javax.swing.JPanel implements ActionListener {
                     break;
             }
         }
-
+        
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

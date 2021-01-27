@@ -5,7 +5,6 @@
  */
 package snakegame;
 
-import java.awt.Color;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -21,10 +20,10 @@ public class GameBoard extends javax.swing.JFrame {
      * Creates new form GameBoard
      */
     public GameBoard() {
+//        initComponents();
         Game snakeGame = new Game();
         add(snakeGame);
-        setResizable(true);
-        setSize(500, 500);
+        setResizable(false);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         pack();
